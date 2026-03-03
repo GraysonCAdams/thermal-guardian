@@ -67,18 +67,14 @@ is_clamshell_closed() {
     [[ "$state" == "Yes" ]]
 }
 
-is_amphetamine_running() {
-    # Returns 0 if Amphetamine process is running, 1 otherwise
-    pgrep -x Amphetamine > /dev/null 2>&1
-}
-
-is_amphetamine_session_active() {
-    # Returns 0 if an Amphetamine session is active, 1 otherwise
-    # IMPORTANT: Only call this if is_amphetamine_running returns true,
-    # so we never accidentally launch the app.
-    local result
-    result=$(osascript -e 'tell application "Amphetamine" to return session is active' 2>/dev/null)
-    [[ "$result" == "true" ]]
+is_amphetamine_preventing_sleep() {
+    # Returns 0 if Amphetamine has an active sleep-prevention assertion.
+    # Uses pmset instead of AppleScript — works reliably from launchd
+    # without TCC/Automation permissions.
+    # Note: avoids pipe because pmset exit code + pipefail causes false negatives.
+    local assertions
+    assertions=$(pmset -g assertions 2>/dev/null || true)
+    echo "$assertions" | grep -q 'Amphetamine.*PreventUserIdleSystemSleep'
 }
 
 # ──────────────────────────────────────────────────────
@@ -91,7 +87,9 @@ send_notification() {
 }
 
 end_amphetamine_session() {
-    osascript -e 'tell application "Amphetamine" to end session' 2>/dev/null
+    # Try AppleScript first (cleanest), fall back to SIGTERM
+    osascript -e 'tell application "Amphetamine" to end session' 2>/dev/null \
+        || kill "$(pgrep -x Amphetamine)" 2>/dev/null || true
 }
 
 force_sleep() {
@@ -122,12 +120,10 @@ main() {
         lid_closed=true
     fi
 
-    # 3. Check Amphetamine status (pgrep first - never launches the app)
+    # 3. Check if Amphetamine is actively preventing sleep (via pmset, no TCC needed)
     local amph_active=false
-    if is_amphetamine_running; then
-        if is_amphetamine_session_active; then
-            amph_active=true
-        fi
+    if is_amphetamine_preventing_sleep; then
+        amph_active=true
     fi
 
     # 4. Evaluate temperature threshold
