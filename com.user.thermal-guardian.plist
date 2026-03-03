@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.thermal-guardian</string>
+
+    <key>Program</key>
+    <string>/Users/grayson/Repos/thermal-guardian/thermal-guardian.sh</string>
+
+    <key>StartInterval</key>
+    <integer>60</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/grayson/Library/Logs/ThermalGuardian-stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/grayson/Library/Logs/ThermalGuardian-stderr.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>
